@@ -28,6 +28,7 @@ my_tcb_t my_find_next_thread_to_schedule(my_pqueue_t *rq) {
 }
 
 void my_dispatcher(my_xstate_t* schedstate, my_xstate_t* currentstate){
+	my_xstate_switch(currentstate, schedstate);
 }
 
 /* Handles a dead thread. If the thread is not joinable call my_tcb_free,
@@ -45,5 +46,13 @@ void my_handle_waiting_thread(my_tcb_t current, my_pqueue_t *wq) {
 		my_pqueue_insert(wq, current->q_prio, current);
 }
 
+/* Increase the priority of each thread in the ready queue so it'll eventually get chosen to run.
+	If the current thread isn't null it must also be inserted into the ready queue with it's current.
+	priority */
 void my_refresh_readyq(my_tcb_t current, my_pqueue_t *rq) {
+	my_pqueue_increase(rq);
+	
+	if (current) {
+		my_pqueue_insert(rq, current->q_prio, current);
+	}
 }
