@@ -145,4 +145,8 @@ void my_handle_dead_thread(my_tcb_t current, my_pqueue_t *dq);
 void my_handle_waiting_thread(my_tcb_t current, my_pqueue_t *wq);
 void my_refresh_readyq(my_tcb_t current, my_pqueue_t *rq);
 
+/* part 3 implementations */
+int my_yield(my_tcb_t to);
+int my_join(my_tcb_t tid);
+
 #endif

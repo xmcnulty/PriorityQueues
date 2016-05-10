@@ -21,7 +21,7 @@ void my_move_threads_from_newq_to_readyq(my_pqueue_t *nq, my_pqueue_t *rq) {
 
 		my_pqueue_insert(rq, priority, cur);
 		
-		cur = my_pqueue_walk(nq, cur, MY_WALK_PREV);
+		cur = my_pqueue_walk(nq, cur, PTH_WALK_PREV);
     }
 }
 
@@ -48,7 +48,7 @@ void my_handle_dead_thread(my_tcb_t current, my_pqueue_t *dq) {
 	if (!current->joinable) {
 		my_tcb_free(current);
 	} else {
-		my_queue_insert(dq, MY_PRIO_STD, current);
+		my_pqueue_insert(dq, MY_PRIO_STD, current);
 	}
 }
 
@@ -66,34 +66,4 @@ void my_refresh_readyq(my_tcb_t current, my_pqueue_t *rq) {
 	if (current) {
 		my_pqueue_insert(rq, current->q_prio, current);
 	}
-}
-
-/* switches execution state from the current thread to the scheduler thread */
-int my_yield(my_tcb_t to) {
-    my_tcb_t scheduled = my_get_thread_scheduler();
-    my_tcb_t current = my_get_thread_current();
-
-    if (current == NULL || scheduled == NULL)
-        return 0;
-
-    my_dispatcher(scheduled->xstate, current->xstate);
-
-    // if to thread is to be scheduled
-    if (to) {
-        if (to->state == MY_STATE_NEW && my_pqueue_contains(my_NQ, to)) {
-            int scheduleStatus = my_pqueue_favorite(my_NQ, to);
-
-            if (!scheduleStatus)
-                return 0;
-        } else if (to->state == MY_STATE_READY && my_pqueue_contains(my_RQ, to)) {
-            int scheduleStatus = my_pqueue_favorite(my_RQ, to);
-
-            if (!scheduleStatus)
-                return 0;
-        } else {
-            return 0;
-        }
-    }
-
-    return 1;
 }
