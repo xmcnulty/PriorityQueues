@@ -435,11 +435,6 @@ struct pth_st {
 
     /* mutex ring */
     pth_ring_t     mutexring;            /* ring of aquired mutex structures            */
-
-#ifdef PTH_EX
-    /* per-thread exception handling */
-    ex_ctx_t       ex_ctx;               /* exception handling context                  */
-#endif
 };
 
 #line 31 "pth_util.c"

@@ -21,7 +21,7 @@
 
 extern int getItemNumber(char*);
 /*
- * 1) spawn bootServer, 2) spawn ticker, 3) spawn client,
+ * 1) spawn bootServer, 2) spawn ticker, 3) spawn client, 
  * 4) client requests, 5) bootServer spawns server
  */
 
@@ -43,16 +43,16 @@ static void *server(void *_arg)
   /* read request */
   for (;;) {
     n = pth_readline(fd, caLine, MAXREQLINE);
-
+    
     if (n < 0) {
-      fprintf(stderr, "read error: errno=%d\n", errno);
-      close(fd);
-      return NULL;
+        fprintf(stderr, "read error: errno=%d\n", errno);
+        close(fd);
+        return NULL;
     }
     if (n == 0)
-      break;
+        break;
     if (n == 1 && caLine[0] == '\n')
-      break;
+        break;
     caLine[n-1] = NUL;
   }
 
@@ -61,18 +61,18 @@ static void *server(void *_arg)
 
   /* generate response */
   sprintf(str, "HTTP/1.0 200 Ok\r\n"
-          "Server: test_httpd\r\n"
-          "Connection: close\r\n"
-          "Content-type: text/plain\r\n"
-          "\r\n"
-          "itemsProduced: %d\r\n", itemsProduced);
+               "Server: test_httpd\r\n"
+               "Connection: close\r\n"
+               "Content-type: text/plain\r\n"
+               "\r\n"
+               "itemsProduced: %d\r\n", itemsProduced);
 
-
+  
   pth_write(fd, str, strlen(str));
 
   /* close connection and let thread die */
   close(fd);
-
+  
   return NULL;
 }
 
@@ -81,8 +81,8 @@ static void *server(void *_arg)
 #define MAXBUF          1024
 
 static void *client(void *arg)
-{
-  int sockfd;
+{   
+	int sockfd;
   struct sockaddr_in dest;
   char buffer[MAXBUF];
 
@@ -97,8 +97,8 @@ static void *client(void *arg)
   dest.sin_family = AF_INET;
   dest.sin_port = htons(MY_PORT);
 
-  /*
-   * converts the Internet host address cp from the IPv4 numbers-and-dots notation into binary form (in network byte order)
+  /* 
+   * converts the Internet host address cp from the IPv4 numbers-and-dots notation into binary form (in network byte order) 
    * and stores it in the structure that inp points to.
    */
   if (inet_aton(SERVER_ADDR, &dest.sin_addr) == 0 ) {
@@ -109,22 +109,22 @@ static void *client(void *arg)
   /*---Connect to server---*/
   if ( pth_connect(sockfd, (struct sockaddr*)&dest, sizeof(dest)) != 0 ) {
     perror("Connect ");
-
+		
     exit(errno);
   }
-
+  
   sprintf(buffer, "GET %s HTTP/1.0\n\n", "/");
   pth_send(sockfd, buffer, strlen(buffer), 0);
 
   /*---Get "Hello?"---*/
   bzero(buffer, MAXBUF);
   pth_recv(sockfd, buffer, sizeof(buffer), 0);
-
+  
   printf("Returned item: #%d\n", getItemNumber(buffer));
 
   /*---Clean up---*/
   close(sockfd);
-
+    
   return 0;
 }
 
@@ -134,34 +134,34 @@ static void *client(void *arg)
 
 static void *ticker(void *_arg)
 {
-  time_t now;
-  char *ct;
-  float avload;
-  pth_attr_t attr;
-
+	time_t now;
+	char *ct;
+	float avload;
+	pth_attr_t attr;
+	
   attr = pth_attr_new();
   pth_attr_set(attr, PTH_ATTR_NAME, "client");
   pth_attr_set(attr, PTH_ATTR_JOINABLE, FALSE);
   pth_attr_set(attr, PTH_ATTR_STACK_SIZE, 64*1024);
 
-  for (;;) {
+	for (;;) {
 
-    pth_t tid;
-    void *val;
-    int rc;
+		pth_t tid;
+	  void *val;
+	  int rc;
+  
+	  tid = pth_spawn(attr, client, NULL);
+    
+		now = time(NULL);
+		ct = ctime(&now);
+		ct[strlen(ct)-1] = NUL;
+		pth_ctrl(PTH_CTRL_GETAVLOAD, &avload);
 
-    tid = pth_spawn(attr, client, NULL);
-
-    now = time(NULL);
-    ct = ctime(&now);
-    ct[strlen(ct)-1] = NUL;
-    pth_ctrl(PTH_CTRL_GETAVLOAD, &avload);
-
-    fprintf(stderr, "ticker woken up on %s, average load: %.2f\n", ct, avload);
-
+		fprintf(stderr, "ticker woken up on %s, average load: %.2f\n", ct, avload);
+    
     pth_sleep(5);
-  }
-
+	}
+	
   /* NOTREACHED */
   return NULL;
 }
@@ -188,7 +188,7 @@ static void myexit(int sig)
   exit(0);
 }
 
-void *bootServer(void *arg) {
+void *bootServer(void *arg) {  
   struct sockaddr_in sar;
   struct protoent *pe;
   struct sockaddr_in peer_addr;
@@ -197,9 +197,9 @@ void *bootServer(void *arg) {
   int port;
 
   port = * (int *) arg;
-
+  
   itemsProduced = 0;
-
+  
   /* create TCP socket */
   if ((pe = getprotobyname("tcp")) == NULL) {
     perror("getprotobyname");
@@ -214,7 +214,7 @@ void *bootServer(void *arg) {
   sar.sin_family      = AF_INET;
   sar.sin_addr.s_addr = INADDR_ANY;
   sar.sin_port        = htons(port);
-
+  
   if (bind(s, (struct sockaddr *)&sar, sizeof(struct sockaddr_in)) == -1) {
     perror("socket");
     exit(1);
@@ -232,40 +232,40 @@ void *bootServer(void *arg) {
   for (;;) {
     /* accept next connection */
     peer_len = sizeof(peer_addr);
-
+    
     if ((sr = pth_accept(s, (struct sockaddr *)&peer_addr, &peer_len)) == -1) {
       perror("accept");
       pth_sleep(1);
-
+      
       continue;
     }
-
+    
     if (pth_ctrl(PTH_CTRL_GETTHREADS) >= REQ_MAX) {
       fprintf(stderr, "currently no more connections acceptable\n");
-
+      
       continue;
     }
-
+    
     fprintf(stderr, "connection established (fd: %d, ip: %s, port: %d)\n", sr, inet_ntoa(peer_addr.sin_addr), ntohs(peer_addr.sin_port));
 
     /* spawn new handling thread for connection */
-
+          
     pth_spawn(attr, server, (void *)((long) sr));
-
+    
     itemsProduced++;
-
+    
   }
 }
 
 int getItemNumber(char* msgbuf) {
-  regex_t    compiled_regex;
+  regex_t    compiled_regex;   
   char       *pattern = "itemsProduced: \\([0-9]*\\).*";
-  int        rc;
+  int        rc;     
   size_t     nmatch = 2; // pmatch[0] contains the msgbuf itself, pmatch[1] is the 1st submsgbuf
   regmatch_t pmatch[2];
-
+  
   int        item = 0;
-
+  
   if (0 != (rc = regcomp(&compiled_regex, pattern, 0))) {
     printf("regcomp() failed, returning nonzero (%d)\n", rc);
     exit(EXIT_FAILURE);
@@ -276,15 +276,15 @@ int getItemNumber(char* msgbuf) {
   } else {
     char *numbuf = malloc(pmatch[1].rm_eo - pmatch[1].rm_so + 1);
     strncpy(numbuf, &msgbuf[pmatch[1].rm_so], pmatch[1].rm_eo - pmatch[1].rm_so);
-
+    
     item = atoi(numbuf);
   }
-
+  
   regfree(&compiled_regex);
 
   return item;
-}
-
+}    
+    
 int main(int argc, char *argv[])
 {
   struct sockaddr_in sar;
@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
 
   /* initialize scheduler */
   pth_init();
-
+  
   signal(SIGPIPE, SIG_IGN);
   signal(SIGINT,  myexit);
   signal(SIGTERM, myexit);
@@ -317,21 +317,21 @@ int main(int argc, char *argv[])
   pth_attr_set(attr, PTH_ATTR_NAME, "server");
   pth_attr_set(attr, PTH_ATTR_JOINABLE, TRUE);
   pth_attr_set(attr, PTH_ATTR_STACK_SIZE, 64*1024);
-
+  
   pth_t tid;
   void *val;
   int rc;
-
+  
   tid = pth_spawn(attr, bootServer, (void *) &port);
-
+	
   /* run a just for fun ticker thread */
   pth_attr_set(attr, PTH_ATTR_NAME, "ticker");
   pth_attr_set(attr, PTH_ATTR_JOINABLE, FALSE);
   pth_attr_set(attr, PTH_ATTR_STACK_SIZE, 64*1024);
-
+  
   pth_spawn(attr, ticker, NULL);
 
   rc = my_join((my_tcb_t) tid, &val);
-
+  
   // kill ticker etc
 }
