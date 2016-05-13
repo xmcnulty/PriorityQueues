@@ -30,22 +30,22 @@ struct xstate_st {
 #define my_xstate_switch(old,new) \
     if (my_xstate_save(old) == 0) \
         my_xstate_restore(new); \
-       //pth_mctx_restored(old);
+    // pth_mctx_restored(old);
 
-    /* the unique thread id/handle */
+/* the unique thread id/handle */
 typedef struct my_tcb_st *my_tcb_t;
 struct my_tcb_st;
 
 /* thread priority queue */
 struct my_pqueue_st {
     my_tcb_t  q_head;
-    int     q_num;
+    int       q_num;
 };
 typedef struct my_pqueue_st my_pqueue_t;
 
 #define my_pqueue_favorite_prio(q) \
     ((q)->q_head != NULL ? (q)->q_head->q_prio + 1 : PRIO_MAX)
-      
+
 #define my_pqueue_elements(q) \
     ((q) == NULL ? (-1) : (q)->q_num)
 
@@ -53,7 +53,7 @@ typedef struct my_pqueue_st my_pqueue_t;
     ((q) == NULL ? NULL : (q)->q_head)
 
 typedef void *my_event_t;
-typedef void *my_time_t;
+typedef struct timeval my_time_t;
 typedef void *my_ring_t;
 
 typedef struct my_cleanup_st my_cleanup_t;
@@ -62,69 +62,69 @@ struct my_cleanup_st {
     void (*func)(void *);
     void *arg;
 };
-    /* thread states */
+/* thread states */
 typedef enum state_en {
     MY_STATE_SCHEDULER = 0,         /* the special scheduler thread only       */
-    MY_STATE_NEW,                   /* spawned, but still not dispatched       */
-    MY_STATE_READY,                 /* ready, waiting to be dispatched         */
-    MY_STATE_WAITING,               /* suspended, waiting until event occurred */
-    MY_STATE_DEAD                   /* terminated, waiting to be joined        */
+            MY_STATE_NEW,                   /* spawned, but still not dispatched       */
+            MY_STATE_READY,                 /* ready, waiting to be dispatched         */
+            MY_STATE_WAITING,               /* suspended, waiting until event occurred */
+            MY_STATE_DEAD                   /* terminated, waiting to be joined        */
 } my_state_t;
 
-    /* thread control block */
+/* thread control block */
 struct my_tcb_st {
-  /* priority queue handling */
-  
-  my_tcb_t       q_next;               /* next thread in pool                         */
-  my_tcb_t       q_prev;               /* previous thread in pool                     */
-  int            q_prio;               /* (relative) priority of thread when queued   */
+    /* priority queue handling */
 
-  /* standard thread control block ingredients */
-  int            prio;                 /* base priority of thread                     */
-  char           name[TCB_NAMELEN];/* name of thread (mainly for debugging)       */
-  int            dispatches;           /* total number of thread dispatches           */
-  my_state_t     state;                /* current state indicator for thread          */
+    my_tcb_t       q_next;               /* next thread in pool                         */
+    my_tcb_t       q_prev;               /* previous thread in pool                     */
+    int            q_prio;               /* (relative) priority of thread when queued   */
 
-  /* timing */
-  my_time_t     spawned;              /* time point at which thread was spawned      */
-  my_time_t     lastran;              /* time point at which thread was last running */
-  my_time_t     running;              /* time range the thread was already running   */
+    /* standard thread control block ingredients */
+    int            prio;                 /* base priority of thread                     */
+    char           name[TCB_NAMELEN];    /* name of thread (mainly for debugging)       */
+    int            dispatches;           /* total number of thread dispatches           */
+    my_state_t     state;                /* current state indicator for thread          */
 
-  /* event handling */
-  my_event_t    events;               /* events the tread is waiting for             */
+    /* timing */
+    my_time_t     spawned;              /* time point at which thread was spawned      */
+    my_time_t     lastran;              /* time point at which thread was last running */
+    my_time_t     running;              /* time range the thread was already running   */
 
-  /* per-thread signal handling */
-  sigset_t       sigpending;           /* set    of pending signals                   */
-  int            sigpendcnt;           /* number of pending signals                   */
+    /* event handling */
+    my_event_t    events;               /* events the tread is waiting for             */
 
-  /* machine context */
-  my_xstate_t    xstate;               /* last saved machine state of thread          */
-  char          *stack;                /* pointer to thread stack                     */
-  unsigned int   stacksize;            /* size of thread stack                        */
-  long          *stackguard;           /* stack overflow guard                        */
-  int            stackloan;            /* stack type                                  */
-  void        *(*start_func)(void *);  /* start routine                               */
-  void          *start_arg;            /* start argument                              */
+    /* per-thread signal handling */
+    sigset_t       sigpending;           /* set    of pending signals                   */
+    int            sigpendcnt;           /* number of pending signals                   */
 
-  /* thread joining */
-  int            joinable;             /* whether thread is joinable                  */
-  void          *join_arg;             /* joining argument                            */
+    /* machine context */
+    my_xstate_t    xstate;               /* last saved machine state of thread          */
+    char          *stack;                /* pointer to thread stack                     */
+    unsigned int   stacksize;            /* size of thread stack                        */
+    long          *stackguard;           /* stack overflow guard                        */
+    int            stackloan;            /* stack type                                  */
+    void        *(*start_func)(void *);  /* start routine                               */
+    void          *start_arg;            /* start argument                              */
 
-  /* per-thread specific storage */
-  const void   **data_value;           /* thread specific  values                     */
-  int            data_count;           /* number of stored values                     */
+    /* thread joining */
+    int            joinable;             /* whether thread is joinable                  */
+    void          *join_arg;             /* joining argument                            */
 
-  /* cancellation support */
-  int            cancelreq;            /* cancellation request is pending             */
-  unsigned int   cancelstate;          /* cancellation state of thread                */
-  my_cleanup_t  *cleanups;             /* stack of thread cleanup handlers            */
+    /* per-thread specific storage */
+    const void   **data_value;           /* thread specific  values                     */
+    int            data_count;           /* number of stored values                     */
 
-  /* mutex ring */
-  my_ring_t     mutexring;            /* ring of aquired mutex structures            */
+    /* cancellation support */
+    int            cancelreq;            /* cancellation request is pending             */
+    unsigned int   cancelstate;          /* cancellation state of thread                */
+    my_cleanup_t  *cleanups;             /* stack of thread cleanup handlers            */
+
+    /* mutex ring */
+    my_ring_t     mutexring;            /* ring of aquired mutex structures            */
 };
 
 
-    /* thread priority values */
+/* thread priority values */
 #define MY_PRIO_MAX                 +5
 #define MY_PRIO_STD                  0
 #define MY_PRIO_MIN                 -5
@@ -137,16 +137,32 @@ extern my_tcb_t my_pqueue_delmax(my_pqueue_t *);
 extern void my_pqueue_increase(my_pqueue_t *q);
 
 extern void my_tcb_free(my_tcb_t t);
-    
+
 void my_move_threads_from_newq_to_readyq(my_pqueue_t *nq, my_pqueue_t *rq);
 my_tcb_t my_find_next_thread_to_schedule(my_pqueue_t *rq);
 void my_dispatcher(my_xstate_t* schedstate, my_xstate_t* currentstate);
 void my_handle_dead_thread(my_tcb_t current, my_pqueue_t *dq);
 void my_handle_waiting_thread(my_tcb_t current, my_pqueue_t *wq);
 void my_refresh_readyq(my_tcb_t current, my_pqueue_t *rq);
+int my_pqueue_contains(my_pqueue_t *q, my_tcb_t t);
+int my_pqueue_favorite(my_pqueue_t *q, my_tcb_t t);
 
-/* part 3 implementations */
-int my_yield(my_tcb_t to);
-int my_join(my_tcb_t tid);
+int my_yield(my_tcb_t);
+int my_join(my_tcb_t tid, void **value);
+long my_ctrl(unsigned long query, ...);
+
+my_tcb_t my_get_thread_current(void);
+my_tcb_t my_get_thread_scheduler(void);
+int my_wait_for_termination(my_tcb_t tid);
+
+
+extern my_pqueue_t my_NQ;
+extern my_pqueue_t my_RQ;
+extern my_pqueue_t my_WQ;
+extern my_pqueue_t my_SQ;
+extern my_pqueue_t my_DQ;
+
+#define my_error(return_val, errno_val) pth_error(return_val, errno_val)
+
 
 #endif
