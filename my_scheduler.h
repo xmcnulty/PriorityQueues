@@ -30,7 +30,7 @@ struct xstate_st {
 #define my_xstate_switch(old,new) \
     if (my_xstate_save(old) == 0) \
         my_xstate_restore(new); \
-    // pth_mctx_restored(old);
+       //pth_mctx_restored(old);
 
     /* the unique thread id/handle */
 typedef struct my_tcb_st *my_tcb_t;
