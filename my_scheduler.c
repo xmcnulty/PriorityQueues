@@ -84,7 +84,7 @@ int my_join(my_tcb_t tid, void **value)
 	} else {
 		my_wait_for_termination(tid);
 
-		my_pqueue_delete(my_DQ, tid);
+		my_pqueue_delete(&my_DQ, tid);
 
 		my_tcb_free(tid);
 
@@ -97,14 +97,14 @@ int my_yield(my_tcb_t to) {
 	// schedule to
 	if (to) {
 		if (to->state == MY_STATE_READY) {
-			if (my_pqueue_contains(my_RQ, to)) {
-				my_pqueue_favorite(my_RQ, to);
+			if (my_pqueue_contains(&my_RQ, to)) {
+				my_pqueue_favorite(&my_RQ, to);
 			} else {
 				return FALSE;
 			}
 		} else if (to->state == MY_STATE_NEW) {
-			if (my_pqueue_contains(my_NQ, to)) {
-				my_pqueue_favorite(my_NQ, to);
+			if (my_pqueue_contains(&my_NQ, to)) {
+				my_pqueue_favorite(&my_NQ, to);
 			} else
 				return FALSE;
 		} else {
@@ -115,7 +115,7 @@ int my_yield(my_tcb_t to) {
 	my_tcb_t current = my_get_thread_current();
 	my_tcb_t sched = my_get_thread_scheduler();
 
-	my_dispatcher(sched->xstate, current->xstate);
+	my_dispatcher(&sched->xstate, &current->xstate);
 
 	return TRUE;
 }
