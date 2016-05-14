@@ -5,7 +5,7 @@ int favornew = 1;
 void my_move_threads_from_newq_to_readyq(my_pqueue_t *nq, my_pqueue_t *rq) {
     my_tcb_t cur = my_pqueue_tail(nq);
 
-    while (my_pqueue_elements(nq) != 0) {
+    while (cur) {
         my_pqueue_delete(nq, cur);
 
 		int priority;
@@ -27,10 +27,11 @@ void my_move_threads_from_newq_to_readyq(my_pqueue_t *nq, my_pqueue_t *rq) {
 
 /* returns next thread to schedule */
 my_tcb_t my_find_next_thread_to_schedule(my_pqueue_t *rq) {
-    if (!rq || my_pqueue_elements(rq) == 0)
+    if (!rq)
         return NULL;
 
-    my_tcb_t fav = my_pqueue_delmax(rq);
+	my_tcb_t fav = rq->q_head;
+    my_pqueue_delete(rq, fav);
 
     return fav;
 }
@@ -45,7 +46,7 @@ void my_dispatcher(my_xstate_t* schedstate, my_xstate_t* currentstate){
 /* Handles a dead thread. If the thread is not joinable call my_tcb_free,
 	otherwise insert the thread to the dead threads queue with MY_PRIO_STD */
 void my_handle_dead_thread(my_tcb_t current, my_pqueue_t *dq) {
-	if (!current->joinable) {
+	if (!(current->joinable)) {
 		my_tcb_free(current);
 	} else {
 		my_pqueue_insert(dq, MY_PRIO_STD, current);
@@ -54,6 +55,9 @@ void my_handle_dead_thread(my_tcb_t current, my_pqueue_t *dq) {
 
 /* Just insert the current thread into the waiting queue (WQ) preserving its current priority */
 void my_handle_waiting_thread(my_tcb_t current, my_pqueue_t *wq) {
+		if (!current)
+			return;
+
 		my_pqueue_insert(wq, current->q_prio, current);
 }
 
