@@ -5,7 +5,7 @@ int favornew = 1;
 void my_move_threads_from_newq_to_readyq(my_pqueue_t *nq, my_pqueue_t *rq) {
     my_tcb_t cur = my_pqueue_tail(nq);
 
-    while (cur) {
+    while (cur && my_pqueue_elements(nq) != 0) {
         my_pqueue_delete(nq, cur);
 
 		int priority;
@@ -65,7 +65,15 @@ void my_handle_waiting_thread(my_tcb_t current, my_pqueue_t *wq) {
 	If the current thread isn't null it must also be inserted into the ready queue with it's current.
 	priority */
 void my_refresh_readyq(my_tcb_t current, my_pqueue_t *rq) {
-	my_pqueue_increase(rq);
+	my_tcb_t cur = rq->q_head;
+
+	while (cur) {
+		if (cur->prio != MY_PRIO_MAX) {
+			cur->prio = cur->prio + 1;
+		}
+
+		cur = cur->q_next;
+	}
 	
 	if (current) {
 		my_pqueue_insert(rq, current->q_prio, current);
